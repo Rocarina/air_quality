@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "506788540060",
+    "firebase_url": "https://driveiq-cc5f5-default-rtdb.firebaseio.com",
+    "project_id": "driveiq-cc5f5",
+    "storage_bucket": "driveiq-cc5f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506788540060:android:a0a74a19804df59307c759",
+        "android_client_info": {
+          "package_name": "com.example.air_quality"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwBRmgYadB-Qq24FRQlzOFCpCHYVEsGzA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:506788540060:android:1e959d351f17186b07c759",
+        "android_client_info": {
+          "package_name": "com.example.sensor_dashboard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwBRmgYadB-Qq24FRQlzOFCpCHYVEsGzA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

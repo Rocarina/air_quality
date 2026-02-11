@@ -1,0 +1,407 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:fl_chart/fl_chart.dart';
+
+class AirQualityPage extends StatefulWidget {
+  const AirQualityPage({super.key});
+
+  @override
+  State<AirQualityPage> createState() => _AirQualityPageState();
+}
+
+class _AirQualityPageState extends State<AirQualityPage> {
+  final DatabaseReference sensorRef =
+      FirebaseDatabase.instance.ref("air_quality/current");
+
+  final int maxSamples = 20;
+
+  final List<double> mq7 = [];
+  final List<double> mq135 = [];
+  final List<double> eco2 = [];
+  final List<double> tvoc = [];
+  final List<double> temp = [];
+  final List<double> hum = [];
+
+  DateTime? lastUpdated;
+
+  // ================= HELPERS =================
+  double _clamp(double v, double min, double max) =>
+      v.isNaN ? min : v.clamp(min, max);
+
+  void _add(List<double> list, double value) {
+    if (list.length >= maxSamples) list.removeAt(0);
+    list.add(value);
+  }
+
+  List<FlSpot> _spots(List<double> values) =>
+      List.generate(values.length, (i) => FlSpot(i.toDouble(), values[i]));
+
+  String _status(double v, double safe, double danger) {
+    if (v <= safe) return "SAFE";
+    if (v <= danger) return "MODERATE";
+    return "DANGEROUS";
+  }
+
+  Color _sensorColor(String key) {
+    switch (key) {
+      case "MQ7":
+        return Colors.teal;
+      case "MQ135":
+        return Colors.indigo;
+      case "eCO2":
+        return Colors.blue;
+      case "TVOC":
+        return Colors.deepOrange;
+      case "TEMP":
+        return Colors.redAccent;
+      case "HUM":
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _yAxisLabel(String key) {
+    switch (key) {
+      case "MQ7":
+        return "CO (ADC)";
+      case "MQ135":
+        return "Air Quality (ADC)";
+      case "eCO2":
+        return "CO₂ (ppm)";
+      case "TVOC":
+        return "TVOC (ppb)";
+      case "TEMP":
+        return "Temperature (°C)";
+      case "HUM":
+        return "Humidity (%)";
+      default:
+        return "Value";
+    }
+  }
+
+  // ================= UI =================
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Air Quality Monitoring"),
+        centerTitle: true,
+        backgroundColor: Colors.green,
+      ),
+      body: StreamBuilder<DatabaseEvent>(
+        stream: sensorRef.onValue,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData ||
+              snapshot.data!.snapshot.value == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final data =
+              Map<String, dynamic>.from(snapshot.data!.snapshot.value as Map);
+
+          _add(mq7, _clamp((data['mq7'] ?? 0).toDouble(), 0, 1200));
+          _add(mq135, _clamp((data['mq135'] ?? 0).toDouble(), 0, 1200));
+          _add(eco2, _clamp((data['eco2'] ?? 0).toDouble(), 0, 5000));
+          _add(tvoc, _clamp((data['tvoc'] ?? 0).toDouble(), 0, 3000));
+          _add(temp, _clamp((data['temperature'] ?? 0).toDouble(), -10, 80));
+          _add(hum, _clamp((data['humidity'] ?? 0).toDouble(), 0, 100));
+
+          lastUpdated = DateTime.now();
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Text(
+                  "Last updated: ${lastUpdated!.toLocal().toString().substring(0, 19)}",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+
+                _summaryBox(),
+                const SizedBox(height: 20),
+                _legendBar(),
+                const SizedBox(height: 24),
+
+                // 🔷 OVERALL AIR QUALITY GRAPH
+                _overallAirQualityGraph(),
+
+                const SizedBox(height: 30),
+                const Text(
+                  "Individual Sensor Visualization",
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+
+                _chart("MQ-7 Sensor", "MQ7", mq7, 700, 900),
+                _chart("MQ-135 Sensor", "MQ135", mq135, 700, 900),
+                _chart("eCO₂ Sensor", "eCO2", eco2, 800, 1200),
+                _chart("TVOC Sensor", "TVOC", tvoc, 220, 600),
+                _chart("Temperature Sensor", "TEMP", temp, 35, 45),
+                _chart("Humidity Sensor", "HUM", hum, 60, 80),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ================= SUMMARY BOX =================
+  Widget _summaryBox() {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text("LIVE SENSOR READINGS",
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 20,
+              runSpacing: 12,
+              children: [
+                _mini("MQ-7", mq7.last, "ADC"),
+                _mini("MQ-135", mq135.last, "ADC"),
+                _mini("eCO₂", eco2.last, "ppm"),
+                _mini("TVOC", tvoc.last, "ppb"),
+                _mini("Temp", temp.last, "°C"),
+                _mini("Humidity", hum.last, "%"),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _mini(String label, double value, String unit) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12)),
+        Text(value.toStringAsFixed(1),
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(unit, style: const TextStyle(fontSize: 11)),
+      ],
+    );
+  }
+
+  // ================= OVERALL GRAPH =================
+  Widget _overallAirQualityGraph() {
+    List<FlSpot> spots = [];
+
+    for (int i = 0; i < mq7.length; i++) {
+      double level = 1;
+
+      if (mq7[i] > 900 ||
+          mq135[i] > 900 ||
+          eco2[i] > 1200 ||
+          tvoc[i] > 600 ||
+          temp[i] > 45 ||
+          hum[i] > 80) {
+        level = 3;
+      } else if (mq7[i] > 700 ||
+          mq135[i] > 700 ||
+          eco2[i] > 800 ||
+          tvoc[i] > 220 ||
+          temp[i] > 35 ||
+          hum[i] > 60) {
+        level = 2;
+      }
+
+      spots.add(FlSpot(i.toDouble(), level));
+    }
+
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Overall In-Car Air Quality Status",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 260,
+              child: LineChart(
+                LineChartData(
+                  minX: 0,
+                  maxX: maxSamples.toDouble() - 1,
+                  minY: 1,
+                  maxY: 3,
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      axisNameWidget:
+                          const Text("Air Quality Level"),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 1,
+                        reservedSize: 90,
+                        getTitlesWidget: (v, _) {
+                          if (v == 1) return const Text("SAFE");
+                          if (v == 2) return const Text("MODERATE");
+                          if (v == 3) return const Text("DANGEROUS");
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      axisNameWidget:
+                          const Text("Time (samples)"),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 4,
+                        getTitlesWidget: (v, _) =>
+                            Text(v.toInt().toString()),
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: true,
+                      barWidth: 4,
+                      color: Colors.redAccent,
+                      dotData: FlDotData(show: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ================= INDIVIDUAL GRAPH =================
+  Widget _chart(
+    String title,
+    String key,
+    List<double> values,
+    double safe,
+    double danger,
+  ) {
+    final current = values.last;
+    final status = _status(current, safe, danger);
+    final color = _sensorColor(key);
+
+    final maxY =
+        ([...values, safe, danger].reduce((a, b) => a > b ? a : b)) * 1.25;
+
+    return Card(
+      elevation: 8,
+      margin: const EdgeInsets.only(bottom: 28),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("$title — $status",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: color)),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 300,
+              child: LineChart(
+                LineChartData(
+                  minX: 0,
+                  maxX: maxSamples.toDouble() - 1,
+                  minY: 0,
+                  maxY: maxY,
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      axisNameWidget: Text(_yAxisLabel(key)),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: maxY / 4,
+                        reservedSize: 60,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      axisNameWidget:
+                          const Text("Time (samples)"),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 5,
+                      ),
+                    ),
+                  ),
+                  extraLinesData: ExtraLinesData(horizontalLines: [
+                    HorizontalLine(y: safe, color: Colors.green),
+                    HorizontalLine(y: danger, color: Colors.red),
+                  ]),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: _spots(values),
+                      isCurved: true,
+                      barWidth: 3,
+                      color: color,
+                      dotData: FlDotData(show: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= LEGEND =================
+Widget _legendBar() {
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: const [
+        _LegendItem(color: Colors.green, text: "SAFE"),
+        _LegendItem(color: Colors.orange, text: "MODERATE"),
+        _LegendItem(color: Colors.red, text: "DANGEROUS"),
+      ],
+    ),
+  );
+}
+
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String text;
+  const _LegendItem({required this.color, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration:
+              BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(text,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+}
