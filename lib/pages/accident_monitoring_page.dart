@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-class AirQualityPage extends StatefulWidget {
-  const AirQualityPage({super.key});
+class AccidentMonitoringPage extends StatefulWidget {
+  const AccidentMonitoringPage({super.key});
 
   @override
-  State<AirQualityPage> createState() => _AirQualityPageState();
+  State<AccidentMonitoringPage> createState() => _AccidentMonitoringPageState();
 }
 
-class _AirQualityPageState extends State<AirQualityPage> {
+class _AccidentMonitoringPageState extends State<AccidentMonitoringPage> {
 
   final DatabaseReference sensorRef =
       FirebaseDatabase.instance.ref("air_quality/current");
@@ -25,6 +25,8 @@ class _AirQualityPageState extends State<AirQualityPage> {
 
   DateTime? lastUpdated;
 
+  bool _dangerDialogVisible = false;
+
   void _add(List<double> list, double value) {
     if (list.length >= maxSamples) list.removeAt(0);
     list.add(value);
@@ -33,11 +35,49 @@ class _AirQualityPageState extends State<AirQualityPage> {
   List<FlSpot> _spots(List<double> values) =>
       List.generate(values.length, (i) => FlSpot(i.toDouble(), values[i]));
 
-  // 🔥 STATUS COLOR
+  // ===== STATUS COLOR =====
   Color _statusColor(double value, double safe, double danger) {
     if (value > danger) return Colors.red;
     if (value > safe) return Colors.orange;
     return Colors.green;
+  }
+
+  void _checkDanger() {
+    bool danger =
+        mq7.isNotEmpty && mq7.last > 30 ||
+        mq135.isNotEmpty && mq135.last > 1500 ||
+        eco2.isNotEmpty && eco2.last > 1200 ||
+        tvoc.isNotEmpty && tvoc.last > 660 ||
+        temp.isNotEmpty && temp.last > 32 ||
+        hum.isNotEmpty && hum.last > 75;
+
+    if (danger && !_dangerDialogVisible) {
+      _dangerDialogVisible = true;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.red.shade50,
+          title: const Text(
+            "⚠ Dangerous Air Quality",
+            style: TextStyle(color: Colors.red),
+          ),
+          content: const Text(
+            "One or more sensors have reached dangerous levels.\nPlease ventilate immediately.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _dangerDialogVisible = false;
+              },
+              child: const Text("ACKNOWLEDGE"),
+            )
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -68,6 +108,10 @@ class _AirQualityPageState extends State<AirQualityPage> {
 
           lastUpdated = DateTime.now();
 
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _checkDanger();
+          });
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -77,11 +121,6 @@ class _AirQualityPageState extends State<AirQualityPage> {
                   "Last Updated: ${lastUpdated!.toLocal().toString().substring(0, 19)}",
                   style: const TextStyle(color: Colors.grey),
                 ),
-
-                const SizedBox(height: 20),
-
-                // 🔥 LIVE SENSOR BOX ADDED HERE
-                _liveSensorBox(),
 
                 const SizedBox(height: 30),
 
@@ -127,59 +166,6 @@ class _AirQualityPageState extends State<AirQualityPage> {
     );
   }
 
-  // 🔥 LIVE SENSOR BOX UI
-  Widget _liveSensorBox() {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            const Text("Live Sensor Readings",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-
-            Wrap(
-              spacing: 20,
-              runSpacing: 15,
-              children: [
-                _sensorTile("CO", mq7.last, "ppm", 9, 30),
-                _sensorTile("MQ135", mq135.last, "ppm", 800, 1500),
-                _sensorTile("CO₂", eco2.last, "ppm", 800, 1200),
-                _sensorTile("TVOC", tvoc.last, "ppb", 220, 660),
-                _sensorTile("Temp", temp.last, "°C", 26, 32),
-                _sensorTile("Humidity", hum.last, "%", 60, 75),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sensorTile(String name, double value, String unit,
-      double safe, double danger) {
-
-    final color = _statusColor(value, safe, danger);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(name,
-            style: const TextStyle(fontSize: 13, color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text(
-          "${value.toStringAsFixed(1)} $unit",
-          style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color),
-        ),
-      ],
-    );
-  }
-
   // ================= OVERALL GRAPH =================
 
   Widget _overallGraph() {
@@ -199,8 +185,8 @@ class _AirQualityPageState extends State<AirQualityPage> {
         LineChartData(
           minX: 0,
           maxX: maxSamples.toDouble() - 1,
-          minY: -0.5,
-          maxY: sensors.length.toDouble() - 1 + 0.5,
+          minY: 0,
+          maxY: sensors.length.toDouble() - 1,
 
           borderData: FlBorderData(show: true),
 
@@ -211,12 +197,7 @@ class _AirQualityPageState extends State<AirQualityPage> {
                 reservedSize: 70,
                 interval: 1,
                 getTitlesWidget: (value, meta) {
-                  if (value % 1 != 0) {
-                    return const SizedBox();
-                  }
-
                   int index = value.toInt();
-                  
                   if (index >= 0 && index < sensors.length) {
                     return Text(
                       sensors[index].$1,
@@ -240,13 +221,12 @@ class _AirQualityPageState extends State<AirQualityPage> {
                 },
               ),
             ),
-            rightTitles:
-                AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
 
           lineBarsData: sensors.asMap().entries.map((entry) {
+
             final index = entry.key;
             final values = entry.value.$2;
             final safe = entry.value.$3;
@@ -256,14 +236,15 @@ class _AirQualityPageState extends State<AirQualityPage> {
               spots: values
                   .asMap()
                   .entries
-                  .map((e) =>
-                      FlSpot(e.key.toDouble(), index.toDouble()))
+                  .map((e) => FlSpot(e.key.toDouble(), index.toDouble()))
                   .toList(),
               isCurved: false,
               barWidth: 3,
-              color: values.isNotEmpty
-                  ? _statusColor(values.last, safe, danger)
-                  : Colors.grey,
+              gradient: LinearGradient(
+                colors: values
+                    .map((v) => _statusColor(v, safe, danger))
+                    .toList(),
+              ),
               dotData: FlDotData(show: false),
             );
           }).toList(),
@@ -317,44 +298,7 @@ class _AirQualityPageState extends State<AirQualityPage> {
                   maxX: maxSamples.toDouble() - 1,
                   minY: 0,
                   maxY: maxY,
-
                   borderData: FlBorderData(show: true),
-
-                  titlesData: FlTitlesData(
-
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 55, // reduced
-                        interval: maxY / 4,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toStringAsFixed(0),
-                            style: const TextStyle(fontSize: 11),
-                          );
-                        },
-                      ),
-                    ),
-
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 28, // reduced
-                        interval: 5,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(fontSize: 11),
-                          );
-                        },
-                      ),
-                    ),
-
-                    rightTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
 
                   extraLinesData: ExtraLinesData(
                     horizontalLines: [
@@ -378,7 +322,12 @@ class _AirQualityPageState extends State<AirQualityPage> {
                       spots: _spots(values),
                       isCurved: true,
                       barWidth: 3,
-                      color: Colors.blue,
+                      gradient: LinearGradient(
+                        colors: values
+                            .map((v) =>
+                                _statusColor(v, safeLimit, dangerLimit))
+                            .toList(),
+                      ),
                       dotData: FlDotData(show: false),
                     ),
                   ],

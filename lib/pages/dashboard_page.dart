@@ -1,73 +1,85 @@
 import 'package:flutter/material.dart';
 import 'air_quality_page.dart';
+import 'accident_monitoring_page.dart';
+
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   void _showOptions(BuildContext context, String module) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                module,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              module,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-              ListTile(
-                leading: const Icon(Icons.show_chart, color: Colors.blue),
-                title: const Text("Detailed Graph View"),
-                subtitle: const Text("Live charts & analysis"),
-                onTap: () {
-                  Navigator.pop(context);
+            ListTile(
+              leading: const Icon(Icons.show_chart, color: Colors.blue),
+              title: const Text("Detailed Graph View"),
+              subtitle: const Text("Live charts & analysis"),
+              onTap: () {
+                Navigator.pop(context);
 
-                  if (module == "Air Quality") {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AirQualityPage(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Module coming soon 🚧"),
-                      ),
-                    );
-                  }
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.dashboard, color: Colors.green),
-                title: const Text("User Friendly View"),
-                subtitle: const Text("Simple status & values"),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("User Friendly View coming soon 🚧"),
+                if (module == "Air Quality") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AirQualityPage(),
                     ),
                   );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+                } 
+                else if (module == "Accident Detection") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AccidentMonitoringPage(),
+                    ),
+                  );
+                } 
+                else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Module coming soon 🚧"),
+                    ),
+                  );
+                }
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.dashboard, color: Colors.green),
+              title: const Text("User Friendly View"),
+              subtitle: const Text("Simple status & values"),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("User Friendly View coming soon 🚧"),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _moduleCard({
     required BuildContext context,
