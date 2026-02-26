@@ -73,9 +73,9 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyBJb1mDwCicke5rHEhZ1CiRqNT9riLikCY',
     appId: '1:506788540060:ios:242a7a756c51a07907c759',
     messagingSenderId: '506788540060',
-    projectId: 'driveiq-cc5f5',
-    databaseURL: 'https://driveiq-cc5f5-default-rtdb.firebaseio.com',
-    storageBucket: 'driveiq-cc5f5.firebasestorage.app',
+    projectId: 'driveiq-7c0f8',
+    databaseURL: 'https://driveiq-7c0f8-default-rtdb.firebaseio.com',
+    storageBucket: 'driveiq-7c0f8.firebasestorage.app',
     iosBundleId: 'com.example.airQuality',
   );
 
@@ -83,10 +83,10 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyBJf05Xjsc1IFS0AKGX1ANpKV1gNGD8TkE',
     appId: '1:506788540060:web:cae267a4cd01929307c759',
     messagingSenderId: '506788540060',
-    projectId: 'driveiq-cc5f5',
-    authDomain: 'driveiq-cc5f5.firebaseapp.com',
-    databaseURL: 'https://driveiq-cc5f5-default-rtdb.firebaseio.com',
-    storageBucket: 'driveiq-cc5f5.firebasestorage.app',
+    projectId: 'driveiq-7c0f8',
+    authDomain: 'driveiq-7c0f8.firebaseapp.com',
+    databaseURL: 'https://driveiq-7c0f8-default-rtdb.firebaseio.com',
+    storageBucket: 'driveiq-7c0f8.firebasestorage.app',
   );
 
 }

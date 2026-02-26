@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'air_quality_page.dart';
+import 'air_quality_user_friendly_page.dart';
+import 'package:air_quality/pages/accident_monitoring_page.dart';
+
 
 class ModuleOptionsPage extends StatelessWidget {
   final String moduleName;
@@ -39,9 +42,10 @@ class ModuleOptionsPage extends StatelessWidget {
               icon: Icons.dashboard_customize,
               color: Colors.green,
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("User Friendly View coming soon 🚧"),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AirQualityUserFriendlyPage(),
                   ),
                 );
               },

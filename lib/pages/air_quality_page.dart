@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'air_quality_user_friendly_page.dart';
+
 
 class AirQualityPage extends StatefulWidget {
   const AirQualityPage({super.key});
@@ -73,6 +75,9 @@ class _AirQualityPageState extends State<AirQualityPage> {
             child: Column(
               children: [
 
+                _buildSegmentToggle(context),
+                const SizedBox(height: 15),
+
                 Text(
                   "Last Updated: ${lastUpdated!.toLocal().toString().substring(0, 19)}",
                   style: const TextStyle(color: Colors.grey),
@@ -99,7 +104,12 @@ class _AirQualityPageState extends State<AirQualityPage> {
 
                 _overallGraph(),
 
+                const SizedBox(height: 15),
+
+                _overallStatusBox(),
+
                 const SizedBox(height: 50),
+
 
                 const Center(
                   child: Text(
@@ -144,12 +154,12 @@ class _AirQualityPageState extends State<AirQualityPage> {
               spacing: 20,
               runSpacing: 15,
               children: [
-                _sensorTile("CO", mq7.last, "ppm", 9, 30),
-                _sensorTile("MQ135", mq135.last, "ppm", 800, 1500),
-                _sensorTile("CO₂", eco2.last, "ppm", 800, 1200),
-                _sensorTile("TVOC", tvoc.last, "ppb", 220, 660),
-                _sensorTile("Temp", temp.last, "°C", 26, 32),
-                _sensorTile("Humidity", hum.last, "%", 60, 75),
+                _sensorTile("CO", mq7.isNotEmpty ? mq7.last : 0, "ppm", 9, 30),
+                _sensorTile("MQ135", mq135.isNotEmpty ? mq135.last : 0, "ppm", 800, 1500),
+                _sensorTile("CO₂", eco2.isNotEmpty ? eco2.last : 0, "ppm", 800, 1200),
+                _sensorTile("TVOC", tvoc.isNotEmpty ? tvoc.last : 0, "ppb", 220, 660),
+                _sensorTile("Temp", temp.isNotEmpty ? temp.last : 0, "°C", 26, 32),
+                _sensorTile("Humidity", hum.isNotEmpty ? hum.last : 0, "%", 60, 75),
               ],
             )
           ],
@@ -272,6 +282,83 @@ class _AirQualityPageState extends State<AirQualityPage> {
     );
   }
 
+  // ================= OVERALL STATUS BOX =================
+
+Widget _overallStatusBox() {
+
+  final coState = _statusColor(mq7.isNotEmpty ? mq7.last : 0, 9, 30);
+  final tempState = _statusColor(temp.isNotEmpty ? temp.last : 0, 26, 32);
+  final humState = _statusColor(hum.isNotEmpty ? hum.last : 0, 60, 75);
+  final tvocState = _statusColor(tvoc.isNotEmpty ? tvoc.last : 0, 220, 660);
+  final co2State = _statusColor(eco2.isNotEmpty ? eco2.last : 0, 800, 1200);
+  final mqState = _statusColor(mq135.isNotEmpty ? mq135.last : 0, 800, 1500);
+
+  List<Color> states = [
+    coState,
+    tempState,
+    humState,
+    tvocState,
+    co2State,
+    mqState
+  ];
+
+  Color overall = Colors.green;
+  String alertSensor = "";
+
+  if (states.contains(Colors.red)) {
+    overall = Colors.red;
+  } else if (states.contains(Colors.orange)) {
+    overall = Colors.orange;
+  }
+
+  if (coState == Colors.red) alertSensor = "CO ";
+  if (mqState == Colors.red) alertSensor += "MQ135 ";
+  if (co2State == Colors.red) alertSensor += "CO₂ ";
+  if (tvocState == Colors.red) alertSensor += "TVOC ";
+  if (tempState == Colors.red) alertSensor += "Temperature ";
+  if (humState == Colors.red) alertSensor += "Humidity ";
+
+  String text =
+      overall == Colors.red
+          ? "DANGEROUS"
+          : overall == Colors.orange
+              ? "MODERATE"
+              : "SAFE";
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: overall.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: overall, width: 1.5),
+    ),
+    child: Column(
+      children: [
+        Text(
+          "Overall Cabin Air Quality: $text",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: overall,
+          ),
+        ),
+        if (overall == Colors.red && alertSensor.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              "Alert Sensors: $alertSensor",
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
   // ================= INDIVIDUAL SENSOR GRAPH =================
 
   Widget _sensorChart(
@@ -390,4 +477,57 @@ class _AirQualityPageState extends State<AirQualityPage> {
       ),
     );
   }
+
+  Widget _buildSegmentToggle(BuildContext context) {
+  return Container(
+    height: 45,
+    decoration: BoxDecoration(
+      color: Colors.grey.shade200,
+      borderRadius: BorderRadius.circular(25),
+    ),
+    child: Row(
+      children: [
+
+        // GRAPH BUTTON
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              "Graph View",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+
+        // USER FRIENDLY BUTTON
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const AirQualityUserFriendlyPage(),
+                ),
+              );
+            },
+            child: const Center(
+              child: Text(
+                "User Friendly",
+                style: TextStyle(
+                    fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 }

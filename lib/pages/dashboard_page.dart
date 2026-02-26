@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'air_quality_page.dart';
-import 'accident_monitoring_page.dart';
+import 'air_quality_user_friendly_page.dart';
+import 'package:air_quality/pages/accident_monitoring_page.dart';
 
 
 class DashboardPage extends StatelessWidget {
@@ -66,11 +67,21 @@ class DashboardPage extends StatelessWidget {
               subtitle: const Text("Simple status & values"),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("User Friendly View coming soon 🚧"),
-                  ),
-                );
+
+                if (module == "Air Quality") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AirQualityUserFriendlyPage(),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("User Friendly View coming soon 🚧"),
+                    ),
+                  );
+                }
               },
             ),
           ],

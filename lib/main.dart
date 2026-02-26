@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'pages/dashboard_page.dart';
+//import 'package:firebase_messaging/firebase_messaging.dart';
+
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   print("Background message: ${message.notification?.title}");
+// }
 
 Future<void> main() async {
   // ✅ REQUIRED before Firebase init
@@ -11,6 +16,8 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
 }
