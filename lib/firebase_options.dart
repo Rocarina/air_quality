@@ -41,8 +41,8 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBJf05Xjsc1IFS0AKGX1ANpKV1gNGD8TkE',
-    appId: '1:506788540060:web:775b920de38e4e6507c759',
+    apiKey: '',
+    appId: '',
     messagingSenderId: '506788540060',
     projectId: 'driveiq-cc5f5',
     authDomain: 'driveiq-cc5f5.firebaseapp.com',
@@ -51,8 +51,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCwBRmgYadB-Qq24FRQlzOFCpCHYVEsGzA',
-    appId: '1:506788540060:android:a0a74a19804df59307c759',
+    apiKey: '',
+    appId: '',
     messagingSenderId: '506788540060',
     projectId: 'driveiq-cc5f5',
     databaseURL: 'https://driveiq-cc5f5-default-rtdb.firebaseio.com',
@@ -60,8 +60,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBJb1mDwCicke5rHEhZ1CiRqNT9riLikCY',
-    appId: '1:506788540060:ios:242a7a756c51a07907c759',
+    apiKey: '',
+    appId: '',
     messagingSenderId: '506788540060',
     projectId: 'driveiq-cc5f5',
     databaseURL: 'https://driveiq-cc5f5-default-rtdb.firebaseio.com',
@@ -70,8 +70,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBJb1mDwCicke5rHEhZ1CiRqNT9riLikCY',
-    appId: '1:506788540060:ios:242a7a756c51a07907c759',
+    apiKey: '',
+    appId: '',
     messagingSenderId: '506788540060',
     projectId: 'driveiq-7c0f8',
     databaseURL: 'https://driveiq-7c0f8-default-rtdb.firebaseio.com',
