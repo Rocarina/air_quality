@@ -80,8 +80,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBJf05Xjsc1IFS0AKGX1ANpKV1gNGD8TkE',
-    appId: '1:506788540060:web:cae267a4cd01929307c759',
+    apiKey: '',
+    appId: '',
     messagingSenderId: '506788540060',
     projectId: 'driveiq-7c0f8',
     authDomain: 'driveiq-7c0f8.firebaseapp.com',
